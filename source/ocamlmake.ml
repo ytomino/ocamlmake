@@ -397,7 +397,7 @@ let known_library = [
 	("str", ["str"]);
 	("unicode", ["bigarray"; "unicode"]); (* unicode-ocaml *)
 	("unix", ["unix"]);
-	("yaml", ["bigarray"; "unicode"; "dfm"; "yaml"]); (* yaml-ocaml *)
+	("yaml", ["yaml"]); (* yaml-ocaml *)
 	("zlib", ["zlib"]) (* zlib-ocaml *)
 ];;
 
