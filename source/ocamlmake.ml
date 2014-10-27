@@ -508,8 +508,9 @@ let ocamldep (source_file: string): (string list * string list) = (
 			let rec loop s i = (
 				if i >= String.length dep || dep.[i] <= ' ' then (
 					if i > s then (
-						let f = String.sub dep s (i - s) in
-						f.[0] <- Char.lowercase f.[0];
+						let f = Bytes.sub (Bytes.unsafe_of_string dep) s (i - s) in
+						Bytes.set f 0 (Char.lowercase (Bytes.get f 0));
+						let f = Bytes.unsafe_to_string f in
 						if List.mem_assoc f known_library then (
 							result_lib := List.rev_append (List.assoc f known_library) !result_lib
 						)
@@ -801,13 +802,13 @@ loop options.source_files;;
 let win_path_to_unix_path s = (
 	begin match options.target with
 	| Optimized | NativeExe ->
-		let result = String.copy s in
-		for i = 0 to String.length result - 1 do
-			if result.[i] = '\\' then (
-				result.[i] <- '/'
+		let result = Bytes.of_string s in
+		for i = 0 to Bytes.length result - 1 do
+			if Bytes.get result i = '\\' then (
+				Bytes.set result i '/'
 			)
 		done;
-		result
+		Bytes.unsafe_to_string result
 	| _ -> s
 	end
 );;

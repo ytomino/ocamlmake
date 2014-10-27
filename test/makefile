@@ -15,7 +15,7 @@ test: $(TESTS)
 	make teardown
 
 $(OCAMLMAKE): ../source/ocamlmake.ml
-	ocamlc -c -g -w Aer -o ./ocamlmake.cmo $<
+	ocamlc -c -g -safe-string -w Aer -o ./ocamlmake.cmo $<
 	ocamlc -o $@ unix.cma ocamlmake.cmo
 
 mli: $(OCAMLMAKE)
