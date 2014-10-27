@@ -2,7 +2,7 @@ ifneq ($(ComSpec),)
 OCAMLMAKE=ocamlmake.exe
 RM=del
 else
-OCAMLMAKE=ocamlmake
+OCAMLMAKE=./ocamlmake
 RM=rm
 endif
 
