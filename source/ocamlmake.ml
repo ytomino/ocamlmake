@@ -25,13 +25,14 @@ ocamlmake switches:\n\
 \  -v --version    Print compiler version and exit\n\
 \n\
 compiler switches (passed to the compiler by ocamlmake):\n\
-\  -g         Save debugging information\n\
-\  -noassert  Don't compile assertion checks\n\
-\  -p         Compile and link with profiling support\n\
-\  -rectypes  Allow arbitrary recursive types\n\
-\  -thread    Generate code that supports the system threads library\n\
-\  -unsafe    No bounds checking on array and string access\n\
-\  -w <flags> Enable or disable warnings according to <flags>:\n\
+\  -g           Save debugging information\n\
+\  -noassert    Don't compile assertion checks\n\
+\  -p           Compile and link with profiling support\n\
+\  -rectypes    Allow arbitrary recursive types\n\
+\  -safe-string Make strings immutable\n\
+\  -thread      Generate code that supports the system threads library\n\
+\  -unsafe      No bounds checking on array and string access\n\
+\  -w <flags>   Enable or disable warnings according to <flags>:\n\
 \     C/c enable/disable suspicious comment\n\
 \     D/d enable/disable deprecated features\n\
 \     E/e enable/disable fragile match\n\
@@ -72,6 +73,7 @@ type compiler_switches = {
 	mutable debug: bool;
 	mutable noassert: bool;
 	mutable rectypes: bool;
+	mutable safe_string: bool;
 	mutable thread: bool;
 	mutable unsafe: bool;
 	mutable outside: bool;
@@ -116,7 +118,7 @@ let options = (
 		force = false;
 		minimum = false;
 		compiler = {profiling = false; debug = false; noassert = false; rectypes = false;
-			thread = false; unsafe = false; outside = false};
+			safe_string = false; thread = false; unsafe = false; outside = false};
 		warnings = "";
 		source_files = [];
 		libraries = [];
@@ -252,6 +254,8 @@ let options = (
 			options.compiler.profiling <- true
 		) else if arg = "-rectypes" || arg = "--rectypes" then (
 			options.compiler.rectypes <- true
+		) else if arg = "-safe-string" || arg = "--safe-string" then (
+			options.compiler.safe_string <- true
 		) else if arg = "-run" || arg = "--run" then (
 			begin match options.target with
 			| Default -> options.target <- Run
@@ -612,6 +616,7 @@ let buffer_add_compiler_switches buffer compiler = (
 	if compiler.debug then Buffer.add_string buffer " -g";
 	if compiler.noassert then Buffer.add_string buffer " -noassert";
 	if compiler.rectypes then Buffer.add_string buffer " -rectypes";
+	if compiler.safe_string then Buffer.add_string buffer " -safe-string";
 	if compiler.thread then Buffer.add_string buffer " -thread";
 	if compiler.unsafe then Buffer.add_string buffer " -unsafe"
 );;
