@@ -1,5 +1,11 @@
 BUILDDIR=build
-DESTDIR=~/bin
+
+ifneq ($(HOMELOCAL),)
+PREFIX=$(HOMELOCAL)
+else
+PREFIX=.
+endif
+BINDIR=$(PREFIX)/bin
 
 empty=
 
@@ -34,5 +40,5 @@ ifeq ($(BUILDDIR),build)
 endif
 
 install: all
-	-mkdir -p $(DESTDIR)
-	install $(BUILDDIR)/$(OCAMLMAKE) $(DESTDIR)
+	-mkdir -p $(BINDIR)
+	install $(BUILDDIR)/$(OCAMLMAKE) $(BINDIR)
