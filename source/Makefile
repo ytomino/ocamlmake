@@ -19,15 +19,17 @@ RM=rm
 DIRSEP=/
 endif
 
+OCAMLOPT=ocamlopt.opt
+
 .PHONY: all clean install
 
 all: $(BUILDDIR) $(BUILDDIR)/$(OCAMLMAKE)
 
 $(BUILDDIR)/$(OCAMLMAKE): $(BUILDDIR)/ocamlmake.cmx
-	ocamlopt -o $@ unix.cmxa $<
+	$(OCAMLOPT) -o $@ unix.cmxa $<
 
 $(BUILDDIR)/ocamlmake.cmx: ocamlmake.ml
-	ocamlopt -c -safe-string -w Aer -o $@ $<
+	$(OCAMLOPT) -c -safe-string -w Aer -o $@ $<
 
 $(BUILDDIR):
 	mkdir $@

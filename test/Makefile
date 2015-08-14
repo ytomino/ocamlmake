@@ -6,6 +6,8 @@ OCAMLMAKE=./ocamlmake
 RM=rm
 endif
 
+OCAMLC=ocamlc.opt
+
 OCAMLMAKE_EXEC=ocamlrun -b $(OCAMLMAKE)
 
 TESTS=mli addmli two twomli twoaddmli runmli
@@ -15,8 +17,8 @@ test: $(TESTS)
 	make teardown
 
 $(OCAMLMAKE): ../source/ocamlmake.ml
-	ocamlc -c -g -safe-string -w Aer -o ./ocamlmake.cmo $<
-	ocamlc -o $@ unix.cma ocamlmake.cmo
+	$(OCAMLC) -c -g -safe-string -w Aer -o ./ocamlmake.cmo $<
+	$(OCAMLC) -o $@ unix.cma ocamlmake.cmo
 
 mli: $(OCAMLMAKE)
 	make teardown
