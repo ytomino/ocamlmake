@@ -114,7 +114,7 @@ let options = (
 		ocamlcp = "ocamlcp";
 		ocamlprof = "ocamlprof";
 		ocamlopt = "ocamlopt.opt";
-		ocamldep = "ocamldep";
+		ocamldep = "ocamldep.opt";
 		force = false;
 		minimum = false;
 		compiler = {profiling = false; debug = false; noassert = false; rectypes = false;
