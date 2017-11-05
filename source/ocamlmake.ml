@@ -513,7 +513,7 @@ let ocamldep (source_file: string): (string list * string list) = (
 				if i >= String.length dep || dep.[i] <= ' ' then (
 					if i > s then (
 						let f = Bytes.sub (Bytes.unsafe_of_string dep) s (i - s) in
-						Bytes.set f 0 (Char.lowercase (Bytes.get f 0));
+						Bytes.set f 0 (Char.lowercase_ascii (Bytes.get f 0));
 						let f = Bytes.unsafe_to_string f in
 						if List.mem_assoc f known_library then (
 							result_lib := List.rev_append (List.assoc f known_library) !result_lib
