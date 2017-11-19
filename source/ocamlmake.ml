@@ -872,6 +872,12 @@ begin match options.target with
 			buffer_add_compiler_switches result options.compiler;
 			Buffer.add_string result " -o ";
 			Buffer.add_string result target_name;
+			begin match options.target with
+			| CMA | CMXA ->
+				Buffer.add_string result " -a";
+			| _ ->
+				()
+			end;
 			List.iter (fun i ->
 				Buffer.add_string result " -I ";
 				Buffer.add_string result i
