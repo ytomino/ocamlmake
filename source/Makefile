@@ -25,7 +25,7 @@ $(BUILDDIR)/$(OCAMLMAKE): $(BUILDDIR)/ocamlmake.cmx
 	$(OCAMLOPT) -o $@ unix.cmxa $<
 
 $(BUILDDIR)/ocamlmake.cmx: ocamlmake.ml
-	$(OCAMLOPT) -c -safe-string -w Aer -o $@ $<
+	$(OCAMLOPT) -c -w Aer -o $@ $<
 
 $(BUILDDIR):
 	mkdir $@
