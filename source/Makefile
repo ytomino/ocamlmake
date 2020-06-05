@@ -1,7 +1,7 @@
 HOST:=$(shell $(CC) -dumpmachine)
 TARGET=$(HOST)
 
-BUILDDIR=build
+BUILDDIR=$(TARGET).noindex
 
 DESTDIR=
 PREFIX=/usr/local
@@ -33,7 +33,7 @@ $(BUILDDIR):
 clean:
 	-rm $(BUILDDIR)/ocamlmake.cm? $(BUILDDIR)/ocamlmake.o
 	-rm $(BUILDDIR)/$(OCAMLMAKE)
-ifeq ($(BUILDDIR),build)
+ifeq ($(BUILDDIR),$(TARGET).noindex)
 	-rmdir $(BUILDDIR)
 endif
 
