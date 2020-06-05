@@ -1,3 +1,6 @@
+HOST:=$(shell $(CC) -dumpmachine)
+TARGET=$(HOST)
+
 BUILDDIR=build
 
 ifneq ($(HOMELOCAL),)
@@ -7,17 +10,13 @@ PREFIX=.
 endif
 BINDIR=$(PREFIX)/bin
 
-empty=
-
-ifneq ($(ComSpec),)
-OCAMLMAKE=ocamlmake.exe
-RM=del
-DIRSEP=\$(empty)
+ifneq ($(findstring mingw,$(TARGET)),)
+ EXEEXT=.exe
 else
-OCAMLMAKE=ocamlmake
-RM=rm
-DIRSEP=/
+ EXEEXT=
 endif
+
+OCAMLMAKE=ocamlmake$(EXEEXT)
 
 OCAMLOPT=ocamlopt.opt
 
@@ -35,8 +34,8 @@ $(BUILDDIR):
 	mkdir $@
 
 clean:
-	-$(RM) $(BUILDDIR)$(DIRSEP)ocamlmake.cm? $(BUILDDIR)$(DIRSEP)ocamlmake.o
-	-$(RM) $(BUILDDIR)$(DIRSEP)$(OCAMLMAKE)
+	-rm $(BUILDDIR)/ocamlmake.cm? $(BUILDDIR)/ocamlmake.o
+	-rm $(BUILDDIR)/$(OCAMLMAKE)
 ifeq ($(BUILDDIR),build)
 	-rmdir $(BUILDDIR)
 endif

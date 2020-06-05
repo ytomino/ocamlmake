@@ -1,10 +1,13 @@
-ifneq ($(ComSpec),)
-OCAMLMAKE=ocamlmake.exe
-RM=del
+HOST:=$(shell $(CC) -dumpmachine)
+TARGET=$(HOST)
+
+ifneq ($(findstring mingw,$(TARGET)),)
+ EXEEXT=.exe
 else
-OCAMLMAKE=./ocamlmake
-RM=rm
+ EXEEXT=
 endif
+
+OCAMLMAKE=ocamlmake$(EXEEXT)
 
 OCAMLC=ocamlc.opt
 
@@ -24,11 +27,7 @@ mli: $(OCAMLMAKE)
 	make teardown
 	echo ====$@====
 	echo let plus x y = x + y > test_a.ml
-ifneq ($(ComSpec),)
-	echo val plus: int -^> int -^> int > test_a.mli
-else
 	echo "val plus: int -> int -> int" > test_a.mli
-endif
 	$(OCAMLMAKE_EXEC) test_a.ml
 	$(OCAMLMAKE_EXEC) -M
 
@@ -38,11 +37,7 @@ addmli: $(OCAMLMAKE)
 	echo let plus x y = x + y > test_a.ml
 	$(OCAMLMAKE_EXEC) test_a.ml
 	$(OCAMLMAKE_EXEC) -M
-ifneq ($(ComSpec),)
-	echo val plus: int -^> int -^> int > test_a.mli
-else
 	echo "val plus: int -> int -> int" > test_a.mli
-endif
 	$(OCAMLMAKE_EXEC) test_a.ml
 	$(OCAMLMAKE_EXEC) -M
 
@@ -58,11 +53,7 @@ twomli: $(OCAMLMAKE)
 	make teardown
 	echo ====$@====
 	echo let _ = Test_b.plus 1 2 > test_a.ml
-ifneq ($(ComSpec),)
-	echo val plus: int -^> int -^> int > test_b.mli
-else
 	echo "val plus: int -> int -> int" > test_b.mli
-endif
 	echo let plus x y = x + y > test_b.ml
 	$(OCAMLMAKE_EXEC) test_a.ml
 	$(OCAMLMAKE_EXEC) -M
@@ -74,11 +65,7 @@ twoaddmli: $(OCAMLMAKE)
 	echo let plus x y = x + y > test_b.ml
 	$(OCAMLMAKE_EXEC) test_a.ml
 	$(OCAMLMAKE_EXEC) -M
-ifneq ($(ComSpec),)
-	echo val plus: int -^> int -^> int > test_b.mli
-else
 	echo "val plus: int -> int -> int" > test_b.mli
-endif
 	$(OCAMLMAKE_EXEC) test_a.ml
 	$(OCAMLMAKE_EXEC) -M
 
@@ -86,16 +73,12 @@ runmli: $(OCAMLMAKE)
 	make teardown
 	echo ====$@====
 	echo let plus x y = x + y > test_a.ml
-ifneq ($(ComSpec),)
-	echo val plus: int -^> int -^> int > test_a.mli
-else
 	echo "val plus: int -> int -> int" > test_a.mli
-endif
 	$(OCAMLMAKE_EXEC) -run test_a.ml
 	$(OCAMLMAKE_EXEC) -M
 
 teardown:
-	-$(RM) .ocamlmake test* *.cm? *.o
+	-rm .ocamlmake test* *.cm? *.o
 
 clean: teardown
-	-$(RM) $(OCAMLMAKE)
+	-rm $(OCAMLMAKE)
