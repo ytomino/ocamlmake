@@ -3,11 +3,8 @@ TARGET=$(HOST)
 
 BUILDDIR=build
 
-ifneq ($(HOMELOCAL),)
-PREFIX=$(HOMELOCAL)
-else
-PREFIX=.
-endif
+DESTDIR=
+PREFIX=/usr/local
 BINDIR=$(PREFIX)/bin
 
 ifneq ($(findstring mingw,$(TARGET)),)
@@ -40,6 +37,8 @@ ifeq ($(BUILDDIR),build)
 	-rmdir $(BUILDDIR)
 endif
 
-install: all
-	-mkdir -p $(BINDIR)
-	install $(BUILDDIR)/$(OCAMLMAKE) $(BINDIR)
+install: all | $(DESTDIR)$(BINDIR)
+	install $(BUILDDIR)/$(OCAMLMAKE) $(DESTDIR)$(BINDIR)
+
+$(DESTDIR)$(BINDIR):
+	mkdir -p $@
