@@ -11,7 +11,7 @@ OCAMLMAKE=ocamlmake$(EXEEXT)
 
 OCAMLC=ocamlc.opt
 
-OCAMLMAKE_EXEC=ocamlrun -b $(OCAMLMAKE)
+OCAMLMAKE_EXEC=ocamlrun -b ./$(OCAMLMAKE)
 
 TESTS=mli addmli two twomli twoaddmli runmli
 
