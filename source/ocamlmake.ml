@@ -1,6 +1,6 @@
 (* "gnatmake" like make tool for Objective Caml by YT *)
 
-let usage = "Usage: ocamlmake <switche...> <source...>\n\
+let usage = "Usage: ocamlmake <switches...> <source...>\n\
 \n\
 \  source is one or more file name from which you can omit the .ml suffix\n\
 \n\
@@ -14,13 +14,13 @@ ocamlmake switches:\n\
 \  -I <dir>        Add <dir> to the list of include directories\n\
 \  -l <lib>        Link library\n\
 \  -L <dir>        Look for program libraries also in dir\n\
-\  -M              List file dependences saved in .ocamlmake\n\
+\  -M              List file dependencies saved in .ocamlmake\n\
 \  -m              Minimal recompilation\n\
 \  -mwindows       Create window mode application (Windows only)\n\
 \  -O              Optimization with ocamlopt instead of ocamlc\n\
 \  -o <file>       Set output file name to <file>\n\
 \  -run            Execute directly\n\
-\  -interact       Interacive mode\n\
+\  -interact       Interactive mode\n\
 \  -S              Keep intermediate assembly file\n\
 \  -v --version    Print compiler version and exit\n\
 \n\
