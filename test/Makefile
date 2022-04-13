@@ -17,14 +17,14 @@ TESTS=mli addmli two twomli twoaddmli runmli
 
 .PHONY: test teardown clean $(TESTS)
 test: $(TESTS)
-	make teardown
+	$(MAKE) teardown
 
 $(OCAMLMAKE): ../source/ocamlmake.ml
 	$(OCAMLC) -c -g -w Aer -o ./ocamlmake.cmo $<
 	$(OCAMLC) -o $@ unix.cma ocamlmake.cmo
 
 mli: $(OCAMLMAKE)
-	make teardown
+	$(MAKE) teardown
 	echo ====$@====
 	echo let plus x y = x + y > test_a.ml
 	echo "val plus: int -> int -> int" > test_a.mli
@@ -32,7 +32,7 @@ mli: $(OCAMLMAKE)
 	$(OCAMLMAKE_EXEC) -M
 
 addmli: $(OCAMLMAKE)
-	make teardown
+	$(MAKE) teardown
 	echo ====$@====
 	echo let plus x y = x + y > test_a.ml
 	$(OCAMLMAKE_EXEC) test_a.ml
@@ -42,7 +42,7 @@ addmli: $(OCAMLMAKE)
 	$(OCAMLMAKE_EXEC) -M
 
 two: $(OCAMLMAKE)
-	make teardown
+	$(MAKE) teardown
 	echo ====$@====
 	echo let _ = Test_b.plus 1 2 > test_a.ml
 	echo let plus x y = x + y > test_b.ml
@@ -50,7 +50,7 @@ two: $(OCAMLMAKE)
 	$(OCAMLMAKE_EXEC) -M
 
 twomli: $(OCAMLMAKE)
-	make teardown
+	$(MAKE) teardown
 	echo ====$@====
 	echo let _ = Test_b.plus 1 2 > test_a.ml
 	echo "val plus: int -> int -> int" > test_b.mli
@@ -59,7 +59,7 @@ twomli: $(OCAMLMAKE)
 	$(OCAMLMAKE_EXEC) -M
 
 twoaddmli: $(OCAMLMAKE)
-	make teardown
+	$(MAKE) teardown
 	echo ====$@====
 	echo let _ = Test_b.plus 1 2 > test_a.ml
 	echo let plus x y = x + y > test_b.ml
@@ -70,7 +70,7 @@ twoaddmli: $(OCAMLMAKE)
 	$(OCAMLMAKE_EXEC) -M
 
 runmli: $(OCAMLMAKE)
-	make teardown
+	$(MAKE) teardown
 	echo ====$@====
 	echo let plus x y = x + y > test_a.ml
 	echo "val plus: int -> int -> int" > test_a.mli
