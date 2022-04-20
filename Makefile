@@ -1,4 +1,4 @@
-.PHONY: all clean install
+.PHONY: all clean install install-bin
 
-all clean install:
+all clean install install-bin:
 	$(MAKE) -C source $@

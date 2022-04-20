@@ -17,14 +17,14 @@ OCAMLMAKE=ocamlmake$(EXEEXT)
 
 OCAMLOPT=ocamlopt.opt
 
-.PHONY: all clean install
+.PHONY: all clean install install-bin
 
-all: $(BUILDDIR) $(BUILDDIR)/$(OCAMLMAKE)
+all: $(BUILDDIR)/$(OCAMLMAKE)
 
 $(BUILDDIR)/$(OCAMLMAKE): $(BUILDDIR)/ocamlmake.cmx
 	$(OCAMLOPT) -o $@ unix.cmxa $<
 
-$(BUILDDIR)/ocamlmake.cmx: ocamlmake.ml
+$(BUILDDIR)/ocamlmake.cmx: ocamlmake.ml | $(BUILDDIR)
 	$(OCAMLOPT) -c -w Aer -o $@ $<
 
 $(BUILDDIR):
@@ -37,7 +37,9 @@ ifeq ($(BUILDDIR),$(TARGET).noindex)
 	-rmdir $(BUILDDIR)
 endif
 
-install: all | $(DESTDIR)$(BINDIR)
+install: install-bin
+
+install-bin: $(BUILDDIR)/$(OCAMLMAKE)
 	install $(BUILDDIR)/$(OCAMLMAKE) $(DESTDIR)$(BINDIR)
 
 $(DESTDIR)$(BINDIR):
