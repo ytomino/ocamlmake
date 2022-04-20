@@ -299,7 +299,9 @@ let options = (
 					Sys.argv.(!i)
 				)
 			) in
-			options.reference_dirs <- dir :: options.reference_dirs
+			if not (List.mem dir options.reference_dirs) then (
+				options.reference_dirs <- dir :: options.reference_dirs
+			)
 		) else if arg = "-O" then (
 			begin match options.target with
 			| Default -> options.target <- Optimized
@@ -328,6 +330,15 @@ let options = (
 			options.error <- true
 		) else (
 			let f = if String.contains arg '.' || Sys.file_exists arg then arg else arg ^ ".ml" in
+			let dir = Filename.dirname f in
+			let f =
+				if dir = Filename.current_dir_name then f else (
+					if not (List.mem dir options.reference_dirs) then (
+						options.reference_dirs <- dir :: options.reference_dirs
+					);
+					Filename.basename f
+				)
+			in
 			options.source_files <- f :: options.source_files
 		);
 		incr i
