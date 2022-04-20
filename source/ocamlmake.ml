@@ -5,24 +5,25 @@ let usage = "Usage: ocamlmake <switches...> <source...>\n\
 \  source is one or more file name from which you can omit the .ml suffix\n\
 \n\
 ocamlmake switches:\n\
-\  -a              Build a library\n\
-\  -c              Compile only (do not link)\n\
-\  -D <dir>        Specify dir as the object directory\n\
-\  -f              Force recompilations\n\
-\  --gcaml         Use G'Caml instead of O'Caml\n\
-\  -h --help       Display this list of options\n\
-\  -I <dir>        Add <dir> to the list of include directories\n\
-\  -l <lib>        Link library\n\
-\  -L <dir>        Look for program libraries also in dir\n\
-\  -M              List file dependencies saved in .ocamlmake\n\
-\  -m              Minimal recompilation\n\
-\  -mwindows       Create window mode application (Windows only)\n\
-\  -O              Optimization with ocamlopt instead of ocamlc\n\
-\  -o <file>       Set output file name to <file>\n\
-\  -run            Execute directly\n\
-\  -interact       Interactive mode\n\
-\  -S              Keep intermediate assembly file\n\
-\  -v --version    Print compiler version and exit\n\
+\  -a                 Build a library\n\
+\  -c                 Compile only (do not link)\n\
+\  -D <dir>           Specify dir as the object directory\n\
+\  -f                 Force recompilations\n\
+\  --gcaml            Use G'Caml instead of O'Caml\n\
+\  -h --help          Display this list of options\n\
+\  -I <dir>           Add <dir> to the list of include directories\n\
+\  -l <lib>           Link library\n\
+\  -L <dir>           Look for program libraries also in dir\n\
+\  -M                 List file dependencies saved in .ocamlmake\n\
+\  -m                 Minimal recompilation\n\
+\  -mwindows          Create window mode application (Windows only)\n\
+\  -O                 Optimization with ocamlopt instead of ocamlc\n\
+\  -o <file>          Set output file name to <file>\n\
+\  --ocamlc <command> Set the OCaml bytecode compiler\n\
+\  -run               Execute directly\n\
+\  -interact          Interactive mode\n\
+\  -S                 Keep intermediate assembly file\n\
+\  -v --version       Print compiler version and exit\n\
 \n\
 compiler switches (passed to the compiler by ocamlmake):\n\
 \  -g           Save debugging information\n\
@@ -85,7 +86,6 @@ type options = {
 	mutable ocaml: string;
 	mutable ocamlc: string;
 	mutable ocamlcp: string;
-	mutable ocamlprof: string;
 	mutable ocamlopt: string;
 	mutable ocamldep: string;
 	mutable force: bool;
@@ -96,7 +96,6 @@ type options = {
 	mutable libraries: string list;
 	mutable reference_dirs: string list;
 	mutable build_dir: string;
-	mutable lib_dir: string;
 	mutable library_dirs: string list;
 	mutable args: string;
 	mutable largs: string;
@@ -104,7 +103,17 @@ type options = {
 	mutable help: bool;
 	mutable version: bool;
 	mutable error: bool};;
-	
+
+let change_ocamlc_suffix suffix ocamlc = (
+	let length = String.length ocamlc in
+	let p = try String.rindex ocamlc '-' with Not_found -> length in
+	if p > 0 && ocamlc.[p - 1] = 'c' then (
+		String.sub ocamlc 0 (p - 1) ^ suffix ^ String.sub ocamlc p (length - p)
+	) else (
+		ocamlc ^ suffix
+	)
+);;
+
 let options = (
 	let options: options = {
 		target = Default;
@@ -112,7 +121,6 @@ let options = (
 		ocaml = "ocaml";
 		ocamlc = "ocamlc.opt";
 		ocamlcp = "ocamlcp";
-		ocamlprof = "ocamlprof";
 		ocamlopt = "ocamlopt.opt";
 		ocamldep = "ocamldep.opt";
 		force = false;
@@ -124,7 +132,6 @@ let options = (
 		libraries = [];
 		reference_dirs = [];
 		build_dir = "";
-		lib_dir = (try Sys.getenv "OCAMLLIB" with Not_found -> "/usr/local/lib/ocaml");
 		library_dirs = [];
 		args = "";
 		largs = "";
@@ -167,10 +174,8 @@ let options = (
 			options.ocaml <- "gcaml";
 			options.ocamlc <- "gcamlc";
 			options.ocamlcp <- "gcamlcp";
-			options.ocamlprof <- "gcamlprof";
 			options.ocamlopt <- "gcamlopt";
-			options.ocamldep <- "gcamldep";
-			options.lib_dir <- (try Sys.getenv "GCAMLLIB" with Not_found -> "/usr/local/lib/gcaml")
+			options.ocamldep <- "gcamldep"
 		) else if arg = "-h" || arg = "--help" then (
 			options.help <- true
 		) else if arg = "-interact" || arg = "--interact" then (
@@ -250,6 +255,14 @@ let options = (
 				prerr_newline ();
 				options.error <- true
 			end
+		) else if arg = "--ocamlc" then (
+			incr i;
+			let ocamlc = Sys.argv.(!i) in
+			options.ocaml <- change_ocamlc_suffix "" ocamlc;
+			options.ocamlc <- ocamlc;
+			options.ocamlcp <- change_ocamlc_suffix "cp" ocamlc;
+			options.ocamlopt <- change_ocamlc_suffix "opt" ocamlc;
+			options.ocamldep <- change_ocamlc_suffix "dep" ocamlc
 		) else if arg = "-p" then (
 			options.compiler.profiling <- true
 		) else if arg = "-rectypes" || arg = "--rectypes" then (
