@@ -9,7 +9,6 @@ ocamlmake switches:\n\
 \  -c                 Compile only (do not link)\n\
 \  -D <dir>           Specify dir as the object directory\n\
 \  -f                 Force recompilations\n\
-\  --gcaml            Use G'Caml instead of O'Caml\n\
 \  -h --help          Display this list of options\n\
 \  -I <dir>           Add <dir> to the list of include directories\n\
 \  -l <lib>           Link library\n\
@@ -170,12 +169,6 @@ let options = (
 			options.minimum <- true
 		) else if arg = "-g" then (
 			options.compiler.debug <- true
-		) else if arg = "--gcaml" then (
-			options.ocaml <- "gcaml";
-			options.ocamlc <- "gcamlc";
-			options.ocamlcp <- "gcamlcp";
-			options.ocamlopt <- "gcamlopt";
-			options.ocamldep <- "gcamldep"
 		) else if arg = "-h" || arg = "--help" then (
 			options.help <- true
 		) else if arg = "-interact" || arg = "--interact" then (
@@ -406,8 +399,6 @@ let known_library = [
 	("dynlink", ["dynlink"]);
 	("glcaml", ["bigarray"; "glcaml"]); (* GLCaml *)
 	("gmp", ["gmp"]); (* OCaml-GMP or gmp-ocaml *)
-	("gcaml", ["gcamllib"]); (* G'Caml *)
-	("gprint", ["gcamllib"]); (* G'Caml *)
 	("graphics", ["graphics"]);
 	("gz", ["gz"]); (* zlib (Ocamlplot) *)
 	("iconv", ["iconv"]); (* iconv-ocaml *)
