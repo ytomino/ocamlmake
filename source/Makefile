@@ -40,7 +40,7 @@ endif
 install: install-bin
 
 install-bin: $(BUILDDIR)/$(OCAMLMAKE)
-	install $(BUILDDIR)/$(OCAMLMAKE) $(DESTDIR)$(BINDIR)
+	install -s $(BUILDDIR)/$(OCAMLMAKE) $(DESTDIR)$(BINDIR)
 
 $(DESTDIR)$(BINDIR):
 	mkdir -p $@
