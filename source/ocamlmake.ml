@@ -27,27 +27,13 @@ ocamlmake switches:\n\
 \n\
 compiler switches (passed to the compiler by ocamlmake):\n\
 \  -g           Save debugging information\n\
-\  -noassert    Don't compile assertion checks\n\
+\  -noassert    Do not compile assertion checks\n\
 \  -rectypes    Allow arbitrary recursive types\n\
-\  -safe-string Make strings immutable\n\
-\  -thread      Generate code that supports the system threads library\n\
-\  -unsafe      No bounds checking on array and string access\n\
-\  -w <flags>   Enable or disable warnings according to <flags>:\n\
-\     C/c enable/disable suspicious comment\n\
-\     D/d enable/disable deprecated features\n\
-\     E/e enable/disable fragile match\n\
-\     F/f enable/disable partially applied function\n\
-\     L/l enable/disable labels omitted in application\n\
-\     M/m enable/disable overriden methods\n\
-\     P/p enable/disable partial match\n\
-\     S/s enable/disable non-unit statement\n\
-\     U/u enable/disable unused match case\n\
-\     V/v enable/disable overriden instance variables\n\
-\     Y/y enable/disable suspicious unused variables\n\
-\     Z/z enable/disable all other unused variables\n\
-\     X/x enable/disable all other warnings\n\
-\     A/a enable/disable all warnings\n\
-\     default setting is \"Aelz\"\n\
+\  -safe-string (was set when configuring the compiler)\n\
+\  -thread      (deprecated) same as -I +threads\n\
+\  -unsafe      Do not compile bounds checking on array and string access\n\
+\  -w <list>    Enable or disable warnings according to:\n\
+\     See ocamlc --warn-help.\n\
 ";;
 
 module Queue = struct
