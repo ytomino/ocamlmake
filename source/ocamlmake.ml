@@ -106,6 +106,7 @@ type options = {
 let change_ocamlc_suffix suffix ocamlc = (
 	let length = String.length ocamlc in
 	let p = try String.rindex ocamlc '-' with Not_found -> length in
+	let p = try String.rindex_from ocamlc p '.' with Not_found -> p in
 	if p > 0 && ocamlc.[p - 1] = 'c' then (
 		String.sub ocamlc 0 (p - 1) ^ suffix ^ String.sub ocamlc p (length - p)
 	) else (
