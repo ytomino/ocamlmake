@@ -16,7 +16,6 @@ ocamlmake switches:\n\
 \  -L <dir>           Look for program libraries also in dir\n\
 \  -M                 List file dependencies saved in .ocamlmake\n\
 \  -m                 Minimal recompilation\n\
-\  -mwindows          Create window mode application (Windows only)\n\
 \  -O                 Optimization with ocamlopt instead of ocamlc\n\
 \  -o <file>          Set output file name to <file>\n\
 \  --ocamlc <command> Set the OCaml bytecode compiler\n\
@@ -322,8 +321,6 @@ let options = (
 				prerr_string "mismatched option: -c\n";
 				options.error <- true
 			end
-		) else if arg = "-mwindows" || arg = "--mwindows" then (
-			options.largs <- options.largs ^ " -cclib -mwindows"
 		) else if arg.[0] = '-' then (
 			prerr_string "unknown option: ";
 			prerr_string arg;
