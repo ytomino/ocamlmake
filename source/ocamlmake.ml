@@ -7,6 +7,7 @@ let usage = "Usage: ocamlmake <switches...> <source...>\n\
 ocamlmake switches:\n\
 \  -a                 Build a library\n\
 \  -c                 Compile only (do not link)\n\
+\  -ccopt <opt>       Pass option <opt> to the C compiler and linker\n\
 \  -D <dir>           Specify dir as the object directory\n\
 \  -f                 Force recompilations\n\
 \  -h --help          Display this list of options\n\
@@ -152,6 +153,10 @@ let options = (
 				prerr_string "mismatched option: -c\n";
 				options.error <- true
 			end
+		) else if arg = "-ccopt" || arg = "--ccopt" then (
+			incr i;
+			let escaped = String.escaped Sys.argv.(!i) in
+			options.largs <- options.largs ^ " -ccopt \"" ^ escaped ^ "\""
 		) else if arg = "-f" then (
 			options.force <- true
 		) else if arg = "-m" then (
