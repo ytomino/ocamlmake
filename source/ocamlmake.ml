@@ -19,6 +19,7 @@ ocamlmake switches:\n\
 \  -O                 Optimization with ocamlopt instead of ocamlc\n\
 \  -o <file>          Set output file name to <file>\n\
 \  --ocamlc <command> Set the OCaml bytecode compiler\n\
+\  -p                 Compile and link with profiling support\n\
 \  -run               Execute directly\n\
 \  -interact          Interactive mode\n\
 \  -S                 Keep intermediate assembly file\n\
@@ -27,7 +28,6 @@ ocamlmake switches:\n\
 compiler switches (passed to the compiler by ocamlmake):\n\
 \  -g           Save debugging information\n\
 \  -noassert    Don't compile assertion checks\n\
-\  -p           Compile and link with profiling support\n\
 \  -rectypes    Allow arbitrary recursive types\n\
 \  -safe-string Make strings immutable\n\
 \  -thread      Generate code that supports the system threads library\n\
@@ -86,6 +86,7 @@ type options = {
 	mutable ocamlc: string;
 	mutable ocamlcp: string;
 	mutable ocamlopt: string;
+	mutable ocamloptp: string;
 	mutable ocamldep: string;
 	mutable force: bool;
 	mutable minimum: bool;
@@ -122,6 +123,7 @@ let options = (
 		ocamlc = "ocamlc.opt";
 		ocamlcp = "ocamlcp";
 		ocamlopt = "ocamlopt.opt";
+		ocamloptp = "ocamloptp";
 		ocamldep = "ocamldep.opt";
 		force = false;
 		minimum = false;
@@ -256,6 +258,7 @@ let options = (
 			options.ocamlc <- ocamlc;
 			options.ocamlcp <- change_ocamlc_suffix "cp" ocamlc;
 			options.ocamlopt <- change_ocamlc_suffix "opt" ocamlc;
+			options.ocamloptp <- change_ocamlc_suffix "optp" ocamlc;
 			options.ocamldep <- change_ocamlc_suffix "dep" ocamlc
 		) else if arg = "-p" then (
 			options.compiler.profiling <- true
@@ -608,9 +611,9 @@ let set_info source_file (info: source_info): unit = (
 let the_compiler = (
 	begin match options.target with
 	| Default | CMO | CMA | ByteExe | CMI | Run | Interact ->
-		if options.compiler.profiling then options.ocamlcp ^ " -p a" else options.ocamlc
+		if options.compiler.profiling then options.ocamlcp else options.ocamlc
 	| Optimized | CMX | CMXA | NativeExe | AsmSrc ->
-		if options.compiler.profiling then options.ocamlopt ^ " -p" else options.ocamlopt
+		if options.compiler.profiling then options.ocamloptp else options.ocamlopt
 	end
 );;
 
