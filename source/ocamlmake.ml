@@ -11,17 +11,17 @@ ocamlmake switches:\n\
 \  -D <dir>           Specify dir as the object directory\n\
 \  -f                 Force recompilations\n\
 \  -h --help          Display this list of options\n\
+\  -interact          Interactive mode\n\
 \  -I <dir>           Add <dir> to the list of include directories\n\
 \  -l <lib>           Link library\n\
 \  -L <dir>           Look for program libraries also in dir\n\
-\  -M                 List file dependencies saved in .ocamlmake\n\
 \  -m                 Minimal recompilation\n\
-\  -O                 Optimization with ocamlopt instead of ocamlc\n\
+\  -M                 List file dependencies saved in .ocamlmake\n\
 \  -o <file>          Set output file name to <file>\n\
 \  --ocamlc <command> Set the OCaml bytecode compiler\n\
+\  -O                 Optimization with ocamlopt instead of ocamlc\n\
 \  -p                 Compile and link with profiling support\n\
 \  -run               Execute directly\n\
-\  -interact          Interactive mode\n\
 \  -S                 Keep intermediate assembly file\n\
 \  -v --version       Print compiler version and exit\n\
 \n\
@@ -156,10 +156,18 @@ let options = (
 			incr i;
 			let escaped = String.escaped Sys.argv.(!i) in
 			options.largs <- options.largs ^ " -ccopt \"" ^ escaped ^ "\""
+		) else if String.length arg >= 2 && arg.[0] = '-' && arg.[1] = 'D' then (
+			let dir = (
+				if String.length arg > 2 then (
+					String.sub arg 2 (String.length arg - 2)
+				) else (
+					incr i;
+					Sys.argv.(!i)
+				)
+			) in
+			options.build_dir <- dir
 		) else if arg = "-f" then (
 			options.force <- true
-		) else if arg = "-m" then (
-			options.minimum <- true
 		) else if arg = "-g" then (
 			options.compiler.debug <- true
 		) else if arg = "-h" || arg = "--help" then (
@@ -172,8 +180,18 @@ let options = (
 				prerr_string "mismatched option: -interact\n";
 				options.error <- true
 			end
-		) else if arg = "-M" then (
-			options.print_dependency <- true
+		) else if String.length arg >= 2 && arg.[0] = '-' && arg.[1] = 'I' then (
+			let dir = (
+				if String.length arg > 2 then (
+					String.sub arg 2 (String.length arg - 2)
+				) else (
+					incr i;
+					Sys.argv.(!i)
+				)
+			) in
+			if not (List.mem dir options.reference_dirs) then (
+				options.reference_dirs <- dir :: options.reference_dirs
+			)
 		) else if String.length arg >= 2 && arg.[0] = '-' && arg.[1] = 'l' then (
 			let lib = (
 				if String.length arg > 2 then (
@@ -194,6 +212,10 @@ let options = (
 				)
 			) in
 			options.library_dirs <- dir :: options.library_dirs
+		) else if arg = "-m" then (
+			options.minimum <- true
+		) else if arg = "-M" then (
+			options.print_dependency <- true
 		) else if arg = "-noassert" || arg = "--noassert" then (
 			options.compiler.noassert <- true
 		) else if (String.length arg >= 2 && arg.[0] = '-' && arg.[1] = 'o') || arg = "--output" then (
@@ -250,18 +272,37 @@ let options = (
 			options.ocamlopt <- change_ocamlc_suffix "opt" ocamlc;
 			options.ocamloptp <- change_ocamlc_suffix "optp" ocamlc;
 			options.ocamldep <- change_ocamlc_suffix "dep" ocamlc
+		) else if arg = "-O" then (
+			begin match options.target with
+			| Default -> options.target <- Optimized
+			| CMO -> options.target <- CMX
+			| CMA -> options.target <- CMXA
+			| ByteExe -> options.target <- NativeExe
+			| Optimized | CMI | CMX | CMXA | NativeExe | AsmSrc -> ()
+			| Run | Interact ->
+				prerr_string "mismatched option: -O\n";
+				options.error <- true
+			end
 		) else if arg = "-p" then (
 			options.compiler.profiling <- true
 		) else if arg = "-rectypes" || arg = "--rectypes" then (
 			options.compiler.rectypes <- true
-		) else if arg = "-safe-string" || arg = "--safe-string" then (
-			options.compiler.safe_string <- true
 		) else if arg = "-run" || arg = "--run" then (
 			begin match options.target with
 			| Default -> options.target <- Run
 			| Run -> ()
 			| Optimized | CMI | CMO | CMA | CMX | CMXA | ByteExe | NativeExe | AsmSrc | Interact ->
 				prerr_string "mismatched option: -run\n";
+				options.error <- true
+			end
+		) else if arg = "-safe-string" || arg = "--safe-string" then (
+			options.compiler.safe_string <- true
+		) else if arg = "-S" then (
+			begin match options.target with
+			| Default | Optimized -> options.target <- AsmSrc
+			| AsmSrc -> ()
+			| CMI | CMO | CMX | CMA | CMXA | ByteExe | NativeExe | Run | Interact ->
+				prerr_string "mismatched option: -c\n";
 				options.error <- true
 			end
 		) else if arg = "-thread" || arg = "--thread" then (
@@ -280,47 +321,6 @@ let options = (
 				)
 			) in
 			options.warnings <- options.warnings ^ opt
-		) else if String.length arg >= 2 && arg.[0] = '-' && arg.[1] = 'D' then (
-			let dir = (
-				if String.length arg > 2 then (
-					String.sub arg 2 (String.length arg - 2)
-				) else (
-					incr i;
-					Sys.argv.(!i)
-				)
-			) in
-			options.build_dir <- dir
-		) else if String.length arg >= 2 && arg.[0] = '-' && arg.[1] = 'I' then (
-			let dir = (
-				if String.length arg > 2 then (
-					String.sub arg 2 (String.length arg - 2)
-				) else (
-					incr i;
-					Sys.argv.(!i)
-				)
-			) in
-			if not (List.mem dir options.reference_dirs) then (
-				options.reference_dirs <- dir :: options.reference_dirs
-			)
-		) else if arg = "-O" then (
-			begin match options.target with
-			| Default -> options.target <- Optimized
-			| CMO -> options.target <- CMX
-			| CMA -> options.target <- CMXA
-			| ByteExe -> options.target <- NativeExe
-			| Optimized | CMI | CMX | CMXA | NativeExe | AsmSrc -> ()
-			| Run | Interact ->
-				prerr_string "mismatched option: -O\n";
-				options.error <- true
-			end
-		) else if arg = "-S" then (
-			begin match options.target with
-			| Default | Optimized -> options.target <- AsmSrc
-			| AsmSrc -> ()
-			| CMI | CMO | CMX | CMA | CMXA | ByteExe | NativeExe | Run | Interact ->
-				prerr_string "mismatched option: -c\n";
-				options.error <- true
-			end
 		) else if arg.[0] = '-' then (
 			prerr_string "unknown option: ";
 			prerr_string arg;
