@@ -427,34 +427,14 @@ if options.build_dir <> "" && not (try Sys.is_directory options.build_dir with S
 );;
 
 let known_library = [
-	("bigarray", ["bigarray"]);
-	("big_int", ["nums"]);
-	("bz", ["bz"]); (* bzip2 (Ocamlplot) *)
-	("curl", ["curl"]); (* ocurl *)
-	("dfm", ["bigarray"; "unicode"; "dfm"]); (* dfm-ocaml *)
-	("dfm_text", ["bigarray"; "unicode"; "dfm"]); (* dfm-ocaml *)
 	("dynlink", ["dynlink"]);
-	("glcaml", ["bigarray"; "glcaml"]); (* GLCaml *)
-	("gmp", ["gmp"]); (* OCaml-GMP or gmp-ocaml *)
-	("graphics", ["graphics"]);
-	("gz", ["gz"]); (* zlib (Ocamlplot) *)
-	("iconv", ["iconv"]); (* iconv-ocaml *)
-	("mpc", ["mpc"; "mpfr"; "gmp"]); (* gmp-ocaml *)
-	("mpfr", ["mpfr"; "gmp"]); (* gmp-ocaml *)
-	("num", ["nums"]);
-	("screen", ["bigarray"; "unicode"; "glcaml"; "sdl"; "sdl_image"; "sdl_mixer"; "sdl_ttf"; "screen"]); (* gl-helper *)
-	("serialize", ["bigarray"; "unicode"; "dfm"]); (* dfm-ocaml *)
-	("serialize_pp", ["bigarray"; "unicode"; "dfm"]); (* dfm-ocaml *)
-	("serialize_yaml", ["bigarray"; "unicode"; "dfm"; "yaml"]); (* yaml-ocaml *)
-	("sdl", ["bigarray"; "sdl"]); (* SDL *)
-	("sdl_image", ["bigarray"; "sdl"; "sdl_image"]); (* SDL_image *)
-	("sdl_mixer", ["bigarray"; "sdl"; "sdl_mixer"]); (* SDL_mixer *)
-	("sdl_ttf", ["bigarray"; "sdl"; "sdl_ttf"]); (* SDL_ttf *)
+	("event", ["unix"; "threads"]);
+	("raw_spacetime_lib", ["raw_spacetime_lib"]);
+	("runtime_events", ["runtime_events"]);
 	("str", ["str"]);
-	("unicode", ["bigarray"; "unicode"]); (* unicode-ocaml *)
+	("thread", ["unix"; "threads"]);
 	("unix", ["unix"]);
-	("yaml", ["yaml"]); (* yaml-ocaml *)
-	("zlib", ["zlib"]) (* zlib-ocaml *)
+	("unixLabels", ["unix"])
 ];;
 
 let find_source (name: string): string option = (
