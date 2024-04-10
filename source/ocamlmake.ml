@@ -605,7 +605,7 @@ let build_info: (string, source_info) Hashtbl.t = (
 );;
 
 if options.print_dependency then (
-	Hashtbl.iter (fun s {depends = deps} ->
+	Hashtbl.iter (fun s {depends = deps; _} ->
 		print_string s;
 		print_string ":";
 		List.iter (fun d ->

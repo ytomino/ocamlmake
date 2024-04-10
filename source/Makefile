@@ -25,7 +25,7 @@ $(BUILDDIR)/$(OCAMLMAKE): $(BUILDDIR)/ocamlmake.cmx
 	$(OCAMLOPT) -o $@ unix.cmxa $<
 
 $(BUILDDIR)/ocamlmake.cmx: ocamlmake.ml | $(BUILDDIR)
-	$(OCAMLOPT) -c -w +a-4-9-70 -o $@ $<
+	$(OCAMLOPT) -c -w +a-4-70 -o $@ $<
 
 $(BUILDDIR):
 	mkdir $@

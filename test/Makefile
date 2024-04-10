@@ -20,7 +20,7 @@ test: $(TESTS)
 	$(MAKE) teardown
 
 $(OCAMLMAKE): ../source/ocamlmake.ml
-	$(OCAMLC) -c -g -w +a-4-9-70 -o ./ocamlmake.cmo $<
+	$(OCAMLC) -c -g -w +a-4-70 -o ./ocamlmake.cmo $<
 	$(OCAMLC) -o $@ unix.cma ocamlmake.cmo
 
 mli: $(OCAMLMAKE)
