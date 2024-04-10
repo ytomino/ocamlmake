@@ -803,6 +803,10 @@ let rec loop source_files = (
 							Buffer.add_string command " -I ";
 							Buffer.add_string command options.build_dir
 						);
+						List.iter (fun dir ->
+							Buffer.add_string command " -I ";
+							Buffer.add_string command dir
+						) options.library_dirs;
 						Buffer.add_string command " -o ";
 						Buffer.add_string command compiled_filename;
 						Buffer.add_string command " ";
