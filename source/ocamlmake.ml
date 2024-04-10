@@ -5,25 +5,27 @@ let usage = "Usage: ocamlmake <switches...> <source...>\n\
 \  source is one or more file name from which you can omit the .ml suffix\n\
 \n\
 ocamlmake switches:\n\
-\  -a                 Build a library\n\
-\  -c                 Compile only (do not link)\n\
-\  -ccopt <opt>       Pass option <opt> to the C compiler and linker\n\
-\  -D <dir>           Specify dir as the object directory\n\
-\  -f                 Force recompilations\n\
-\  -h --help          Display this list of options\n\
-\  -interact          Interactive mode\n\
-\  -I <dir>           Add <dir> to the list of include directories\n\
-\  -l <lib>           Link library\n\
-\  -L <dir>           Look for program libraries also in dir\n\
-\  -m                 Minimal recompilation\n\
-\  -M                 List file dependencies saved in .ocamlmake\n\
-\  -o <file>          Set output file name to <file>\n\
-\  --ocamlc <command> Set the OCaml bytecode compiler\n\
-\  -O                 Optimization with ocamlopt instead of ocamlc\n\
-\  -p                 Compile and link with profiling support\n\
-\  -run               Execute directly\n\
-\  -S                 Keep intermediate assembly file\n\
-\  -v --version       Print compiler version and exit\n\
+\  -a                   Build a library\n\
+\  -c                   Compile only (do not link)\n\
+\  -ccopt <opt>         Pass option <opt> to the C compiler and linker\n\
+\  -D <dir>             Specify dir as the object directory\n\
+\  -f                   Force recompilations\n\
+\  -h --help            Display this list of options\n\
+\  -interact            Interactive mode\n\
+\  -I <dir>             Add <dir> to the list of include directories\n\
+\  -l <lib>             Link library\n\
+\  -L <dir>             Look for program libraries also in dir\n\
+\  -m                   Minimal recompilation\n\
+\  -M                   List file dependencies saved in .ocamlmake\n\
+\  -o <file>            Set output file name to <file>\n\
+\  --ocamlc <command>   Set the OCaml bytecode compiler\n\
+\  --ocamldep <command> Set the OCaml dependency tool\n\
+\  --ocamlopt <command> Set the OCaml native compiler\n\
+\  -O                   Optimization with ocamlopt instead of ocamlc\n\
+\  -p                   Compile and link with profiling support\n\
+\  -run                 Execute directly\n\
+\  -S                   Keep intermediate assembly file\n\
+\  -v --version         Print compiler version and exit\n\
 \n\
 compiler switches (passed to the compiler by ocamlmake):\n\
 \  -g           Save debugging information\n\
@@ -90,18 +92,49 @@ type options = {
 	mutable version: bool;
 	mutable error: bool};;
 
+let rindex_extension_suffix s = (
+	(* Remove .extension and -suffix. *)
+	let p =
+		try String.rindex s '-' with
+		| Not_found -> String.length s
+	in
+	try String.rindex_from s (p - 1) '.' with
+	| Not_found -> p
+);;
+
+let rindex_extension s = (
+	try String.rindex s '.' with
+	| Not_found -> String.length s
+);;
+
 let change_ocamlc_suffix suffix ocamlc = (
 	let length = String.length ocamlc in
 	(* e.g. ocamlc.opt-4.13 *)
-	let p = try String.rindex ocamlc '-' with Not_found -> length in
-	let p = try String.rindex_from ocamlc (p - 1) '.' with Not_found -> p in
+	let p = rindex_extension_suffix ocamlc in
 	if p > 0 && ocamlc.[p - 1] = 'c' then (
 		String.sub ocamlc 0 (p - 1) ^ suffix ^ String.sub ocamlc p (length - p)
 	) else
 	(* e.g. x86-64-linux-gnu-ocamlc.opt *)
-	let p = try String.rindex ocamlc '.' with Not_found -> length in
+	let p = rindex_extension ocamlc in
 	if p > 0 && ocamlc.[p - 1] = 'c' then (
 		String.sub ocamlc 0 (p - 1) ^ suffix ^ String.sub ocamlc p (length - p)
+	) else "ocaml" ^ suffix (* use default name *)
+);;
+
+let change_ocamlopt_suffix suffix ocamlopt = (
+	let isopt s p = (
+		p > 3 && s.[p - 3] = 'o' && s.[p - 2] = 'p' && s.[p - 1] = 't'
+	) in
+	let length = String.length ocamlopt in
+	(* e.g. ocamlopt.opt-4.13 *)
+	let p = rindex_extension_suffix ocamlopt in
+	if isopt ocamlopt p then (
+		String.sub ocamlopt 0 (p - 3) ^ suffix ^ String.sub ocamlopt p (length - p)
+	) else
+	(* e.g. x86-64-linux-gnu-ocamlopt.opt *)
+	let p = rindex_extension ocamlopt in
+	if isopt ocamlopt p then (
+		String.sub ocamlopt 0 (p - 3) ^ suffix ^ String.sub ocamlopt p (length - p)
 	) else "ocaml" ^ suffix (* use default name *)
 );;
 
@@ -274,8 +307,16 @@ let options = (
 			options.ocamlc <- ocamlc;
 			options.ocamlcp <- change_ocamlc_suffix "cp" ocamlc;
 			options.ocamlopt <- change_ocamlc_suffix "opt" ocamlc;
-			options.ocamloptp <- change_ocamlc_suffix "optp" ocamlc;
-			options.ocamldep <- change_ocamlc_suffix "dep" ocamlc
+			options.ocamloptp <- change_ocamlc_suffix "optp" ocamlc
+		) else if arg = "--ocamldep" then (
+			incr i;
+			let ocamldep = Sys.argv.(!i) in
+			options.ocamldep <- ocamldep
+		) else if arg = "--ocamlopt" then (
+			incr i;
+			let ocamlopt = Sys.argv.(!i) in
+			options.ocamlopt <- ocamlopt;
+			options.ocamloptp <- change_ocamlopt_suffix "optp" ocamlopt
 		) else if arg = "-O" then (
 			begin match options.target with
 			| Default -> options.target <- Optimized
