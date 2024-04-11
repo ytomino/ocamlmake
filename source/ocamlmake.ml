@@ -796,18 +796,18 @@ let rec loop source_files = (
 					execute compile_command;
 					set_info source_file {info with switches = options.compiler};
 					if asm then (
-						let command = Buffer.create 0 in
-						Buffer.add_string command (if Sys.os_type = "Win32" then "move " else "mv ");
-						Buffer.add_string command (
+						let oldpath =
 							let s = Filename.chop_extension compiled_filename ^ ".s" in
-							if Sys.file_exists s then (
-								s ^ " "
-							) else (
-								Filename.chop_extension compiled_filename ^ ".asm "
-							)
-						);
-						Buffer.add_string command (if options.target_name = "" then "." else options.target_name);
-						execute (Buffer.contents command)
+							if Sys.file_exists s then s
+							else Filename.chop_extension compiled_filename ^ ".asm"
+						in
+						let newpath =
+							if options.target_name = "" then Filename.basename oldpath
+							else options.target_name
+						in
+						if oldpath <> newpath then (
+							Sys.rename oldpath newpath
+						)
 					);
 					latest := Unix.time ()
 				);
