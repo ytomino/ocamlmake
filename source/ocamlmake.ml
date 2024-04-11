@@ -427,14 +427,14 @@ if options.build_dir <> "" && not (try Sys.is_directory options.build_dir with S
 );;
 
 let known_library = [
-	("dynlink", ["dynlink"]);
-	("event", ["unix"; "threads"]);
-	("raw_spacetime_lib", ["raw_spacetime_lib"]);
-	("runtime_events", ["runtime_events"]);
-	("str", ["str"]);
-	("thread", ["unix"; "threads"]);
-	("unix", ["unix"]);
-	("unixLabels", ["unix"])
+	("dynlink", ([], ["dynlink"]));
+	("event", (["+threads"], ["unix"; "threads"]));
+	("raw_spacetime_lib", ([], ["raw_spacetime_lib"]));
+	("runtime_events", ([], ["runtime_events"]));
+	("str", ([], ["str"]));
+	("thread", (["+threads"], ["unix"; "threads"]));
+	("unix", ([], ["unix"]));
+	("unixLabels", ([], ["unix"]))
 ];;
 
 let find_source (name: string): string option = (
@@ -463,10 +463,12 @@ type source_info = {
 	kind: source_kind;
 	switches: compiler_switches;
 	depends: string list;
+	depending_library_dirs: string list;
 	depending_libraries: string list};;
 	
-let ocamldep (source_file: string): (string list * string list) = (
+let ocamldep (source_file: string): string list * string list * string list = (
 	let result_mls = ref [] in
+	let result_dir = ref [] in
 	let result_lib = ref [] in
 	let command = (
 		let r = Buffer.create 0 in
@@ -548,7 +550,9 @@ let ocamldep (source_file: string): (string list * string list) = (
 						Bytes.set f 0 (Char.lowercase_ascii (Bytes.get f 0));
 						let f = Bytes.unsafe_to_string f in
 						if List.mem_assoc f known_library then (
-							result_lib := List.rev_append (List.assoc f known_library) !result_lib
+							let dirs, libs = List.assoc f known_library in
+							result_dir := List.rev_append dirs !result_dir;
+							result_lib := List.rev_append libs !result_lib
 						)
 					);
 					if i < String.length dep then (
@@ -562,7 +566,7 @@ let ocamldep (source_file: string): (string list * string list) = (
 		)
 	| _ -> prerr_string "error: "; prerr_string command; exit 1
 	end;
-	(!result_mls, List.rev (!result_lib))
+	!result_mls, List.rev (!result_dir), List.rev (!result_lib)
 );;
 
 let execute (command: string): unit = (
@@ -571,7 +575,7 @@ let execute (command: string): unit = (
 	if Sys.command command <> 0 then exit 1
 );;
 
-let build_info_revision = 0x100;; (* increment when binary format is changed *)
+let build_info_revision = 0x101;; (* increment when binary format is changed *)
 
 let build_info_filename = Filename.concat options.build_dir ".ocamlmake";;
 
@@ -618,8 +622,16 @@ let get_info source_file source_file_with_path kind remake = (
 	if not remake && Hashtbl.mem build_info source_file then (
 		(Hashtbl.find build_info source_file, false)
 	) else (
-		let (dm, dl) = ocamldep source_file_with_path in
-		({kind = kind; switches = {options.compiler with outside = true}; depends = dm; depending_libraries = dl}, true)
+		let depends, depending_library_dirs, depending_libraries =
+			ocamldep source_file_with_path
+		in
+		{
+			kind;
+			switches = {options.compiler with outside = true};
+			depends;
+			depending_library_dirs;
+			depending_libraries
+		}, true
 	)
 );;
 
@@ -659,6 +671,7 @@ let buffer_add_compiler_switches buffer compiler = (
 	if compiler.unsafe then Buffer.add_string buffer " -unsafe"
 );;
 
+let library_dirs: string Queue.t = Queue.create ();;
 let link_files: string Queue.t = Queue.create ();;
 
 let latest: float ref = ref 0.0;;
@@ -785,14 +798,15 @@ let rec loop source_files = (
 							Buffer.add_string command " -w ";
 							Buffer.add_string command options.warnings
 						);
-						if options.build_dir <> "" then (
-							Buffer.add_string command " -I ";
-							Buffer.add_string command options.build_dir
-						);
-						List.iter (fun dir ->
+						let add_I dir = (
 							Buffer.add_string command " -I ";
 							Buffer.add_string command dir
-						) options.library_dirs;
+						) in
+						List.iter add_I info.depending_library_dirs;
+						List.iter add_I options.library_dirs;
+						if options.build_dir <> "" then (
+							add_I options.build_dir
+						);
 						Buffer.add_string command " -o ";
 						Buffer.add_string command compiled_filename;
 						Buffer.add_string command " ";
@@ -817,6 +831,9 @@ let rec loop source_files = (
 					);
 					latest := Unix.time ()
 				);
+				List.iter (fun dir ->
+					if not (Queue.mem dir library_dirs) then Queue.add dir library_dirs
+				) info.depending_library_dirs;
 				List.iter (fun lib ->
 					let lib = lib ^ library_extension in
 					if not (Queue.mem lib link_files) then Queue.add lib link_files
@@ -866,15 +883,20 @@ begin match options.target with
 	let run_command = (
 		let result = Buffer.create 0 in
 		Buffer.add_string result options.ocaml;
+		let add_I dir = (
+			Buffer.add_string result " -I ";
+			Buffer.add_string result dir
+		) in
+		Queue.iter add_I library_dirs;
+		List.iter add_I options.library_dirs;
+		if options.build_dir <> "" then (
+			add_I options.build_dir
+		);
 		List.iter (fun i ->
 			Buffer.add_string result " ";
 			Buffer.add_string result i;
 			Buffer.add_string result library_extension
 		) options.libraries;
-		if options.build_dir <> "" then (
-			Buffer.add_string result " -I ";
-			Buffer.add_string result options.build_dir
-		);
 		Queue.iter (fun i ->
 			Buffer.add_string result " ";
 			Buffer.add_string result i
@@ -920,10 +942,12 @@ begin match options.target with
 			| _ ->
 				()
 			end;
-			List.iter (fun i ->
+			let add_I dir = (
 				Buffer.add_string result " -I ";
-				Buffer.add_string result i
-			) options.library_dirs;
+				Buffer.add_string result dir
+			) in
+			Queue.iter add_I library_dirs;
+			List.iter add_I options.library_dirs;
 			List.iter (fun i ->
 				Buffer.add_string result " ";
 				Buffer.add_string result i;
