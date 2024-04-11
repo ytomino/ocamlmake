@@ -26,6 +26,7 @@ ocamlmake switches:\n\
 \  -run                 Execute directly\n\
 \  -S                   Keep intermediate assembly file\n\
 \  -v --version         Print compiler version and exit\n\
+\  -verbose             Print calls to external commands and file operations\n\
 \n\
 compiler switches (passed to the compiler by ocamlmake):\n\
 \  -g           Save debugging information\n\
@@ -90,6 +91,7 @@ type options = {
 	mutable print_dependency: bool;
 	mutable help: bool;
 	mutable version: bool;
+	mutable verbose: bool;
 	mutable error: bool};;
 
 let rindex_extension_suffix s = (
@@ -163,6 +165,7 @@ let options = (
 		print_dependency = false;
 		help = false;
 		version = false;
+		verbose = false;
 		error = false
 	} in
 	let length = Array.length Sys.argv in
@@ -356,6 +359,8 @@ let options = (
 			options.compiler.unsafe <- true
 		) else if arg = "-v" || arg = "--version" then (
 			options.version <- true
+		) else if arg = "-verbose" || arg = "--verbose" then (
+			options.verbose <- true
 		) else if String.length arg >= 2 && arg.[0] = '-' && arg.[1] = 'w' then (
 			let opt = (
 				if String.length arg > 2 then (
@@ -418,11 +423,26 @@ let version (): int = (
 	Sys.command cmd
 );;
 
+let prerr_info (): unit = (
+	prerr_string Sys.argv.(0);
+	prerr_string ": info: ";
+);;
+
+let prerr_command (command: string): unit = (
+	prerr_string command;
+	prerr_newline ()
+);;
+
 if options.error then exit 1;;
 if options.version then exit (version ());;
 if options.help || (options.source_files = [] && not options.print_dependency) then exit (usage ());;
 
 if options.build_dir <> "" && not (try Sys.is_directory options.build_dir with Sys_error _ -> false) then (
+	if options.verbose then (
+		prerr_info ();
+		prerr_string "mkdir ";
+		prerr_endline options.build_dir
+	);
 	Unix.mkdir options.build_dir 0o755
 );;
 
@@ -481,6 +501,9 @@ let ocamldep (source_file: string): string list * string list * string list = (
 		Buffer.add_string r source_file;
 		Buffer.contents r
 	) in
+	if options.verbose then (
+		prerr_command command
+	);
 	let p_in = Unix.open_process_in command in
 	let dep = (
 		let r = Buffer.create 0 in
@@ -536,6 +559,9 @@ let ocamldep (source_file: string): string list * string list * string list = (
 	| _ -> prerr_string "error: "; prerr_string command; prerr_newline (); exit 1
 	end;
 	let command = options.ocamldep ^ " -modules " ^ source_file in
+	if options.verbose then (
+		prerr_command command
+	);
 	let p_in = Unix.open_process_in command in
 	let dep = (try input_line p_in with End_of_file -> "") in
 	begin match Unix.close_process_in p_in with
@@ -570,8 +596,7 @@ let ocamldep (source_file: string): string list * string list * string list = (
 );;
 
 let execute (command: string): unit = (
-	prerr_string command;
-	prerr_newline ();
+	prerr_command command;
 	if Sys.command command <> 0 then exit 1
 );;
 
@@ -588,6 +613,11 @@ let build_info: (string, source_info) Hashtbl.t = (
 			else Hashtbl.create 13
 		in
 		close_in f;
+		if options.verbose then (
+			prerr_info ();
+			prerr_string "read ";
+			prerr_endline build_info_filename
+		);
 		r
 	| exception Sys_error _ ->
 		Hashtbl.create 13
@@ -610,7 +640,12 @@ let save_build_info () = (
 	let f = open_out_bin build_info_filename in
 	output_binary_int f build_info_revision;
 	Marshal.to_channel f build_info [];
-	close_out f
+	close_out f;
+	if options.verbose then (
+		prerr_info ();
+		prerr_string "write ";
+		prerr_endline build_info_filename
+	);
 );;
 at_exit save_build_info;;
 
@@ -798,6 +833,9 @@ let rec loop source_files = (
 							Buffer.add_string command " -w ";
 							Buffer.add_string command options.warnings
 						);
+						if options.verbose then (
+							Buffer.add_string command " -verbose";
+						);
 						let add_I dir = (
 							Buffer.add_string command " -I ";
 							Buffer.add_string command dir
@@ -826,6 +864,13 @@ let rec loop source_files = (
 							else options.target_name
 						in
 						if oldpath <> newpath then (
+							if options.verbose then (
+								prerr_info ();
+								prerr_string "rename ";
+								prerr_string oldpath;
+								prerr_string " to ";
+								prerr_endline newpath;
+							);
 							Sys.rename oldpath newpath
 						)
 					);
@@ -934,6 +979,9 @@ begin match options.target with
 			let result = Buffer.create 0 in
 			Buffer.add_string result the_compiler;
 			buffer_add_compiler_switches result options.compiler;
+			if options.verbose then (
+				Buffer.add_string result " -verbose";
+			);
 			Buffer.add_string result " -o ";
 			Buffer.add_string result target_name;
 			begin match options.target with
