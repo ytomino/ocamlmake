@@ -571,17 +571,22 @@ let execute (command: string): unit = (
 	if Sys.command command <> 0 then exit 1
 );;
 
+let build_info_revision = 0x100;; (* increment when binary format is changed *)
+
 let build_info_filename = Filename.concat options.build_dir ".ocamlmake";;
 
 let build_info: (string, source_info) Hashtbl.t = (
-	begin try
-		let f = open_in_bin build_info_filename in
-		let r = Marshal.from_channel f in
+	match open_in_bin build_info_filename with
+	| _ as f ->
+		let revision = input_binary_int f in
+		let r =
+			if revision = build_info_revision then Marshal.from_channel f
+			else Hashtbl.create 13
+		in
 		close_in f;
 		r
-	with
-	| _ -> Hashtbl.create 13
-	end
+	| exception Sys_error _ ->
+		Hashtbl.create 13
 );;
 
 if options.print_dependency then (
@@ -599,6 +604,7 @@ if options.print_dependency then (
 
 let save_build_info () = (
 	let f = open_out_bin build_info_filename in
+	output_binary_int f build_info_revision;
 	Marshal.to_channel f build_info [];
 	close_out f
 );;
