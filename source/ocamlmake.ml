@@ -930,20 +930,6 @@ let rec loop source_files = (
 ) in
 loop options.source_files;;
 
-let win_path_to_unix_path s = (
-	begin match options.target with
-	| Optimized | NativeExe ->
-		let result = Bytes.of_string s in
-		for i = 0 to Bytes.length result - 1 do
-			if Bytes.get result i = '\\' then (
-				Bytes.set result i '/'
-			)
-		done;
-		Bytes.unsafe_to_string result
-	| _ -> s
-	end
-);;
-
 let guess_ext_exe () = (
 	match build_info.ext_exe with
 	| None ->
@@ -1051,7 +1037,7 @@ begin match options.target with
 			) options.libraries;
 			Queue.iter (fun i ->
 				Buffer.add_string result " ";
-				Buffer.add_string result (win_path_to_unix_path i)
+				Buffer.add_string result i
 			) link_files;
 			Buffer.add_string result options.largs;
 			Buffer.contents result
