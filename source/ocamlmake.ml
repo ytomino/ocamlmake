@@ -423,6 +423,11 @@ let version (): int = (
 	Sys.command cmd
 );;
 
+let prerr_error (): unit = (
+	prerr_string Sys.argv.(0);
+	prerr_string ": error: ";
+);;
+
 let prerr_info (): unit = (
 	prerr_string Sys.argv.(0);
 	prerr_string ": info: ";
@@ -556,7 +561,10 @@ let ocamldep (source_file: string): string list * string list * string list = (
 			) in
 			loop start start
 		)
-	| _ -> prerr_string "error: "; prerr_string command; prerr_newline (); exit 1
+	| _ ->
+		prerr_error ();
+		prerr_endline command;
+		exit 1
 	end;
 	let command = options.ocamldep ^ " -modules " ^ source_file in
 	if options.verbose then (
@@ -590,7 +598,10 @@ let ocamldep (source_file: string): string list * string list * string list = (
 			) in
 			loop start start
 		)
-	| _ -> prerr_string "error: "; prerr_string command; exit 1
+	| _ ->
+		prerr_error ();
+		prerr_endline command;
+		exit 1
 	end;
 	!result_mls, List.rev (!result_dir), List.rev (!result_lib)
 );;
@@ -600,17 +611,28 @@ let execute (command: string): unit = (
 	if Sys.command command <> 0 then exit 1
 );;
 
-let build_info_revision = 0x101;; (* increment when binary format is changed *)
+let build_info_revision = 0x102;; (* increment when binary format is changed *)
 
 let build_info_filename = Filename.concat options.build_dir ".ocamlmake";;
 
-let build_info: (string, source_info) Hashtbl.t = (
+type build_info = {
+	source_info: (string, source_info) Hashtbl.t;
+	mutable ext_exe: string option;
+};;
+
+let build_info: build_info = (
+	let default_build_info () = (
+		{
+			source_info = Hashtbl.create 13;
+			ext_exe = None
+		}
+	) in
 	match open_in_bin build_info_filename with
 	| _ as f ->
 		let revision = input_binary_int f in
 		let r =
 			if revision = build_info_revision then Marshal.from_channel f
-			else Hashtbl.create 13
+			else default_build_info ()
 		in
 		close_in f;
 		if options.verbose then (
@@ -620,7 +642,7 @@ let build_info: (string, source_info) Hashtbl.t = (
 		);
 		r
 	| exception Sys_error _ ->
-		Hashtbl.create 13
+		default_build_info ()
 );;
 
 if options.print_dependency then (
@@ -632,7 +654,7 @@ if options.print_dependency then (
 			print_string d;
 		) deps;
 		print_newline ()
-	) build_info;
+	) build_info.source_info;
 	exit 0
 );;
 
@@ -650,12 +672,12 @@ let save_build_info () = (
 at_exit save_build_info;;
 
 let mem_info (source_file: string): bool = (
-	Hashtbl.mem build_info source_file
+	Hashtbl.mem build_info.source_info source_file
 );;
 
 let get_info source_file source_file_with_path kind remake = (
-	if not remake && Hashtbl.mem build_info source_file then (
-		(Hashtbl.find build_info source_file, false)
+	if not remake && Hashtbl.mem build_info.source_info source_file then (
+		(Hashtbl.find build_info.source_info source_file, false)
 	) else (
 		let depends, depending_library_dirs, depending_libraries =
 			ocamldep source_file_with_path
@@ -671,7 +693,7 @@ let get_info source_file source_file_with_path kind remake = (
 );;
 
 let set_info source_file (info: source_info): unit = (
-	Hashtbl.replace build_info source_file info
+	Hashtbl.replace build_info.source_info source_file info
 );;
 
 let the_compiler = (
@@ -922,6 +944,29 @@ let win_path_to_unix_path s = (
 	end
 );;
 
+let guess_ext_exe () = (
+	match build_info.ext_exe with
+	| None ->
+		let command = the_compiler ^ " -config-var ext_exe" in
+		if options.verbose then (
+			prerr_command command
+		);
+		let p_in = Unix.open_process_in command in
+		let ext_exe = (try input_line p_in with End_of_file -> "") in
+		begin match Unix.close_process_in p_in with
+		| Unix.WEXITED 0 ->
+			let result = Some ext_exe in
+			build_info.ext_exe <- result;
+			result
+		| _ ->
+			prerr_error ();
+			prerr_endline command;
+			exit 1;
+		end;
+	| Some _ as result ->
+		result
+);;
+
 begin match options.target with
 | CMI | CMO | CMX | AsmSrc -> ()
 | Run | Interact ->
@@ -962,7 +1007,10 @@ begin match options.target with
 				| CMA -> r ^ ".cma"
 				| CMXA -> r ^ ".cmxa"
 				| Default | Optimized | ByteExe | NativeExe ->
-					if Sys.os_type = "Win32" then r ^ ".exe" else r
+					begin match guess_ext_exe () with
+					| None -> r
+					| Some ext_exe -> r ^ ext_exe
+					end
 				| _ -> assert false
 				end
 			| [] -> assert false
