@@ -36,7 +36,7 @@ compiler switches (passed to the compiler by ocamlmake):\n\
 \  -thread      (deprecated) same as -I +threads\n\
 \  -unsafe      Do not compile bounds checking on array and string access\n\
 \  -w <list>    Enable or disable warnings according to:\n\
-\     See ocamlc --warn-help.\n\
+\     See ocamlc -warn-help.\n\
 ";;
 
 module Queue = struct
